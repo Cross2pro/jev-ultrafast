@@ -85,7 +85,10 @@ function render() {
     predicted: "Choice ready · inspect or execute",
     done: "Jev reports complete · inspect the page",
     blocked: "Stopped · no supported next action",
-    uncertain: "Paused · action confidence is below the floor",
+    uncertain:
+      state?.uncertainty?.reason === "stale_target"
+        ? "Paused · the target changed before execution"
+        : "Paused · action confidence is below the floor",
   };
   $("status").textContent = labels[state.status] || state.status;
   if (!page) {

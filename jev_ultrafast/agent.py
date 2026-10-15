@@ -109,6 +109,7 @@ class Agent:
             "elapsed_ms": round((time.perf_counter() - state["started_at"]) * 1000),
         }
         state["history"].append(event)
+        state["elapsed_ms"] = event["elapsed_ms"]
         state["uncertainty"] = event
         state["status"] = "uncertain"
         self.pending_text = None

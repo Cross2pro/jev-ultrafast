@@ -104,7 +104,7 @@ with Agent(
         print(state["status"])
 ```
 
-The gate checks both operation and selected-target confidence. A rejected action is recorded with `executed=False`, and the run stops with `status == "uncertain"`. If the observed target changes before execution, the action is also rejected with `reason="stale_target"`. The floor is a routing threshold for caller-controlled escalation, not a calibrated safety guarantee.
+The gate checks both operation and selected-target confidence. A rejected action is recorded with `executed=False`, and the run stops with `status == "uncertain"`. If the agent sees that the observed target changed before execution, the action is also rejected with `reason="stale_target"`. A change detected only inside browser execution still retries with a fresh observation instead of rejecting. The floor is a routing threshold for caller-controlled escalation, not a calibrated safety guarantee.
 
 ## Why it moves
 

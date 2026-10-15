@@ -226,15 +226,38 @@ def test_uncertain_run_cannot_request_another_model_decision(runner):
         runner.command("predict")
 
 
-def test_stale_target_is_recorded_and_stops_before_browser_input(runner):
+@pytest.mark.parametrize("kind", ["fill", "click", "select"])
+def test_stale_target_is_recorded_and_stops_before_browser_input(runner, kind):
+    p = runner.state["page"]
+    p["actions"].append({"id": "e4", "kind": "select", "label": "Sort", "role": "combobox", "value": "", "node": 30})
+    p["fingerprint"] = fingerprint(p)
+    choice_id = {"fill": "e1", "click": "e3", "select": "e4"}[kind]
+    runner.state["decision"] = decision(choice_id)
     runner.state["browser"].fresh.return_value = False
+
+    result = runner.command("act", {"fingerprint": p["fingerprint"]})
+
+    event = runner.state["history"][-1]
+    assert result["status"] == "uncertain"
+    assert event["kind"] == kind
+    assert event["reason"] == "stale_target"
+    assert event["executed"] is False
+    assert result["elapsed_ms"] == event["elapsed_ms"]
+    runner.state["browser"].act.assert_not_called()
+
+
+def test_fill_recheck_records_stale_target_after_first_check_passes(runner, monkeypatch):
+    helper = Mock(return_value=("book", {"model": "test", "latency_ms": 10}))
+    monkeypatch.setattr(loop, "field_text", helper)
+    runner.state["browser"].fresh.side_effect = [True, False]
 
     result = runner.command("act", {"fingerprint": runner.state["page"]["fingerprint"]})
 
     event = runner.state["history"][-1]
+    assert runner.state["browser"].fresh.call_count == 2
     assert result["status"] == "uncertain"
     assert event["reason"] == "stale_target"
-    assert event["executed"] is False
+    helper.assert_not_called()
     runner.state["browser"].act.assert_not_called()
 
 
